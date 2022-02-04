@@ -1,0 +1,1 @@
+This VBA standard module contains common Excel Worksheet functions.

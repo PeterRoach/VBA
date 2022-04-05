@@ -39,7 +39,7 @@ Option Explicit
 '  Module Type: Class
 '  Module Name: clsArrayListString
 '  Module Description: ArrayList implementation for Strings.
-'  Module Version: 1.0
+'  Module Version: 1.1
 '  Module License: MIT
 '  Module Author: Peter Roach; PeterRoach.Code@gmail.com
 '  Module Contents:
@@ -526,27 +526,50 @@ End Function
 
 Public Sub Sort( _
 Optional CompareMethod As VbCompareMethod = vbBinaryCompare)
-    If Not pSize > 0 Then
-        Exit Sub
-    End If
-    If pSize < 51 Then
-        pInsertionSort CompareMethod
-    Else
-        pMergeSort CompareMethod
-    End If
+    Const RUN& = 32
+    Dim N&
+    Dim L&
+    Dim M&
+    Dim R&
+    Dim i&
+    For i = 0 To pSize - 1 Step RUN
+        InsertionSort i, Min(i + RUN - 1, pSize - 1), CompareMethod
+    Next i
+    N = RUN
+    Do While N < pSize
+        L = 0
+        Do While L < pSize
+            M = L + N - 1
+            R = Min(L + 2 * N - 1, pSize - 1)
+            If M < R Then
+                Merge L, M, R, CompareMethod
+            End If
+            L = L + 2 * N
+        Loop
+        N = N * 2
+    Loop
 End Sub
 
-Private Sub pInsertionSort(CompareMethod As VbCompareMethod)
+Private Function Min&(a&, b&)
+    If a < b Then
+        Min = a
+    Else
+        Min = b
+    End If
+End Function
+
+Private Sub InsertionSort(L&, R&, _
+Optional CompareMethod As VbCompareMethod = vbBinaryCompare)
     Dim i&
     Dim j&
-    Dim Element$
-    For i = 1 To pSize - 1
+    Dim Element
+    For i = L + 1 To R
         Element = pStringArray(i)
         j = i - 1
         Do While StrComp(Element, pStringArray(j), CompareMethod) = -1
             pStringArray(j + 1) = pStringArray(j)
             j = j - 1
-            If j < 0 Then
+            If j < L Then
                 Exit Do
             End If
         Loop
@@ -554,53 +577,39 @@ Private Sub pInsertionSort(CompareMethod As VbCompareMethod)
     Next i
 End Sub
 
-Private Sub pMergeSort(CompareMethod As VbCompareMethod)
-    MergeSortR pStringArray, 0, pSize - 1, CompareMethod
-End Sub
-
-Private Sub MergeSortR(Arr$(), First&, Last&, _
-CompareMethod As VbCompareMethod)
-    Dim Middle&
-    If First < Last Then
-        Middle = (First + Last) \ 2
-        MergeSortR Arr, First, Middle, CompareMethod
-        MergeSortR Arr, Middle + 1, Last, CompareMethod
-        Merge Arr, First, Middle, Last, CompareMethod
-    End If
-End Sub
-
-Private Sub Merge(Arr$(), First&, Middle&, Last&, _
-CompareMethod As VbCompareMethod)
-    Dim Temp$()
-    ReDim Temp$(0 To (Last - First + 1) - 1)
+Private Sub Merge(L&, M&, R&, _
+Optional CompareMethod As VbCompareMethod = vbBinaryCompare)
+    Dim Temp()
+    ReDim Temp(0 To (R - L + 1) - 1)
     Dim i&
     Dim j&
     Dim k&
-    i = First
-    j = Middle + 1
+    i = L
+    j = M + 1
     k = 0
-    Do While i <= Middle And j <= Last
-        If StrComp(Arr(i), Arr(j), CompareMethod) < 1 Then
-            Temp(k) = Arr(i)
+    Do While i <= M And j <= R
+        If StrComp(pStringArray(i), pStringArray(j), _
+        CompareMethod) < 1 Then
+            Temp(k) = pStringArray(i)
             k = k + 1
             i = i + 1
         Else
-            Temp(k) = Arr(j)
+            Temp(k) = pStringArray(j)
             k = k + 1
             j = j + 1
         End If
     Loop
-    Do While i <= Middle
-        Temp(k) = Arr(i)
+    Do While i <= M
+        Temp(k) = pStringArray(i)
         k = k + 1
         i = i + 1
     Loop
-    Do While j <= Last
-        Temp(k) = Arr(j)
+    Do While j <= R
+        Temp(k) = pStringArray(j)
         k = k + 1
         j = j + 1
     Loop
-    For i = First To Last
-        Arr(i) = Temp(i - First)
+    For i = L To R
+        pStringArray(i) = Temp(i - L)
     Next i
 End Sub

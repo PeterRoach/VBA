@@ -39,7 +39,7 @@ Option Explicit
 '  Module Type: Class
 '  Module Name: clsArrayListVariant
 '  Module Description: ArrayList implementation for value-type Variants.
-'  Module Version: 1.0
+'  Module Version: 1.1
 '  Module License: MIT
 '  Module Author: Peter Roach; PeterRoach.Code@gmail.com
 '  Module Contents:
@@ -555,27 +555,49 @@ End Function
 '======================================================================
 
 Public Sub Sort()
-    If Not pSize > 0 Then
-        Exit Sub
-    End If
-    If pSize < 51 Then
-        pInsertionSort
-    Else
-        pMergeSort
-    End If
+    Const RUN& = 32
+    Dim N&
+    Dim L&
+    Dim M&
+    Dim R&
+    Dim i&
+    For i = 0 To pSize - 1 Step RUN
+        InsertionSort i, Min(i + RUN - 1, pSize - 1)
+    Next i
+    N = RUN
+    Do While N < pSize
+        L = 0
+        Do While L < pSize
+            M = L + N - 1
+            R = Min(L + 2 * N - 1, pSize - 1)
+            If M < R Then
+                Merge L, M, R
+            End If
+            L = L + 2 * N
+        Loop
+        N = N * 2
+    Loop
 End Sub
 
-Private Sub pInsertionSort()
+Private Function Min&(a&, b&)
+    If a < b Then
+        Min = a
+    Else
+        Min = b
+    End If
+End Function
+
+Private Sub InsertionSort(L&, R&)
     Dim i&
     Dim j&
     Dim Element
-    For i = 1 To pSize - 1
+    For i = L + 1 To R
         Element = pArray(i)
         j = i - 1
         Do While Element < pArray(j)
             pArray(j + 1) = pArray(j)
             j = j - 1
-            If j < 0 Then
+            If j < L Then
                 Exit Do
             End If
         Loop
@@ -583,51 +605,37 @@ Private Sub pInsertionSort()
     Next i
 End Sub
 
-Private Sub pMergeSort()
-    MergeSortR pArray, 0, pSize - 1
-End Sub
-
-Private Sub MergeSortR(Arr(), First&, Last&)
-    Dim Middle&
-    If First < Last Then
-        Middle = (First + Last) \ 2
-        MergeSortR Arr, First, Middle
-        MergeSortR Arr, Middle + 1, Last
-        Merge Arr, First, Middle, Last
-    End If
-End Sub
-
-Private Sub Merge(Arr(), First&, Middle&, Last&)
+Private Sub Merge(L&, M&, R&)
     Dim Temp()
-    ReDim Temp(0 To (Last - First + 1) - 1)
+    ReDim Temp(0 To (R - L + 1) - 1)
     Dim i&
     Dim j&
     Dim k&
-    i = First
-    j = Middle + 1
+    i = L
+    j = M + 1
     k = 0
-    Do While i <= Middle And j <= Last
-        If Arr(i) <= Arr(j) Then
-            Temp(k) = Arr(i)
+    Do While i <= M And j <= R
+        If pArray(i) <= pArray(j) Then
+            Temp(k) = pArray(i)
             k = k + 1
             i = i + 1
         Else
-            Temp(k) = Arr(j)
+            Temp(k) = pArray(j)
             k = k + 1
             j = j + 1
         End If
     Loop
-    Do While i <= Middle
-        Temp(k) = Arr(i)
+    Do While i <= M
+        Temp(k) = pArray(i)
         k = k + 1
         i = i + 1
     Loop
-    Do While j <= Last
-        Temp(k) = Arr(j)
+    Do While j <= R
+        Temp(k) = pArray(j)
         k = k + 1
         j = j + 1
     Loop
-    For i = First To Last
-        Arr(i) = Temp(i - First)
+    For i = L To R
+        pArray(i) = Temp(i - L)
     Next i
 End Sub

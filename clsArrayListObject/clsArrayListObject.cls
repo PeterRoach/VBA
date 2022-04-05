@@ -39,7 +39,7 @@ Option Explicit
 '  Module Type: Class
 '  Module Name: clsArrayListObject
 '  Module Description: ArrayList implementation for Objects.
-'  Module Version: 1.0
+'  Module Version: 1.1
 '  Module License: MIT
 '  Module Author: Peter Roach; PeterRoach.Code@gmail.com
 '  Module Contents:
@@ -669,34 +669,56 @@ End Sub
 '======================================================================
 
 Public Sub Sort(Member$, Optional MemberIsMethod As Boolean = False)
-    If Not pSize > 0 Then
-        Exit Sub
-    End If
+    Const RUN& = 32
+    Dim N&
+    Dim L&
+    Dim M&
+    Dim R&
+    Dim i&
     Dim CallType As VbCallType
     If MemberIsMethod Then
         CallType = VbMethod
     Else
         CallType = VbGet
     End If
-    If pSize < 51 Then
-        pInsertionSort Member, CallType
-    Else
-        pMergeSort Member, CallType
-    End If
+    For i = 0 To pSize - 1 Step RUN
+        InsertionSort i, Min(i + RUN - 1, pSize - 1), Member, CallType
+    Next i
+    N = RUN
+    Do While N < pSize
+        L = 0
+        Do While L < pSize
+            M = L + N - 1
+            R = Min(L + 2 * N - 1, pSize - 1)
+            If M < R Then
+                Merge L, M, R, Member, CallType
+            End If
+            L = L + 2 * N
+        Loop
+        N = N * 2
+    Loop
 End Sub
 
-Private Sub pInsertionSort(Member$, CallType As VbCallType)
+Private Function Min&(a&, b&)
+    If a < b Then
+        Min = a
+    Else
+        Min = b
+    End If
+End Function
+
+Private Sub InsertionSort(L&, R&, Member$, CallType As VbCallType)
     Dim i&
     Dim j&
     Dim Element As Object
-    For i = 1 To pSize - 1
+    For i = L + 1 To R
         Set Element = pArray(i)
         j = i - 1
         Do While CallByName(Element, Member, CallType) < _
         CallByName(pArray(j), Member, CallType)
             Set pArray(j + 1) = pArray(j)
             j = j - 1
-            If j < 0 Then
+            If j < L Then
                 Exit Do
             End If
         Loop
@@ -704,54 +726,38 @@ Private Sub pInsertionSort(Member$, CallType As VbCallType)
     Next i
 End Sub
 
-Private Sub pMergeSort(Member$, CallType As VbCallType)
-    MergeSortR pArray, 0, pSize - 1, Member, CallType
-End Sub
-
-Private Sub MergeSortR(Arr() As Object, First&, Last&, Member$, _
-CallType As VbCallType)
-    Dim Middle&
-    If First < Last Then
-        Middle = (First + Last) \ 2
-        MergeSortR Arr, First, Middle, Member, CallType
-        MergeSortR Arr, Middle + 1, Last, Member, CallType
-        Merge Arr, First, Middle, Last, Member, CallType
-    End If
-End Sub
-
-Private Sub Merge(Arr() As Object, First&, Middle&, Last&, Member$, _
-CallType As VbCallType)
-    Dim Temp() As Object
-    ReDim Temp(0 To (Last - First + 1) - 1)
+Private Sub Merge(L&, M&, R&, Member$, CallType As VbCallType)
+    Dim Temp()
+    ReDim Temp(0 To (R - L + 1) - 1)
     Dim i&
     Dim j&
     Dim k&
-    i = First
-    j = Middle + 1
+    i = L
+    j = M + 1
     k = 0
-    Do While i <= Middle And j <= Last
-        If CallByName(Arr(i), Member, CallType) <= _
-        CallByName(Arr(j), Member, CallType) Then
-            Set Temp(k) = Arr(i)
+    Do While i <= M And j <= R
+        If CallByName(pArray(i), Member, CallType) <= _
+        CallByName(pArray(j), Member, CallType) Then
+            Set Temp(k) = pArray(i)
             k = k + 1
             i = i + 1
         Else
-            Set Temp(k) = Arr(j)
+            Set Temp(k) = pArray(j)
             k = k + 1
             j = j + 1
         End If
     Loop
-    Do While i <= Middle
-        Set Temp(k) = Arr(i)
+    Do While i <= M
+        Set Temp(k) = pArray(i)
         k = k + 1
         i = i + 1
     Loop
-    Do While j <= Last
-        Set Temp(k) = Arr(j)
+    Do While j <= R
+        Set Temp(k) = pArray(j)
         k = k + 1
         j = j + 1
     Loop
-    For i = First To Last
-        Set Arr(i) = Temp(i - First)
+    For i = L To R
+        Set pArray(i) = Temp(i - L)
     Next i
 End Sub

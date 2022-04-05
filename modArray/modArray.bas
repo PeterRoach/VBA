@@ -31,7 +31,7 @@ Option Explicit
 '  Module Type: Standard
 '  Module Name: modArray
 '  Module Description: Contains high-level array functions.
-'  Module Version: 1.0
+'  Module Version: 1.1
 '  Module License: MIT
 '  Module Author: Peter Roach; PeterRoach.Code@gmail.com
 '  Module Contents:
@@ -90,17 +90,12 @@ Option Explicit
 '       pIsPrime
 '       pRandomLong
 '       pRandomDouble
+'       pMin
 '       pInsertionSortV
-'       pMergeSortV
-'       pMergeSortRV
 '       pMergeV
 '       pInsertionSortS
-'       pMergeSortS
-'       pMergeSortRS
 '       pMergeS
 '       pInsertionSortO
-'       pMergeSortO
-'       pMergeSortRO
 '       pMergeO
 '    Test Procedures:
 '       TestTypedArrayFunctions
@@ -124,15 +119,10 @@ Option Explicit
 '       TestShuffleArray
 '       TestShuffleObjectArray
 '       TestSizeOfArray
+'       TestMin
 '       TestSortArray
-'       TestInsertionSortV
-'       TestMergeSortV
 '       TestSortStringArray
-'       TestInsertionSortS
-'       TestMergeSortS
 '       TestSortObjectArray
-'       TestInsertionSortO
-'       TestMergeSortO
 '       TestReverseArray
 '       TestReverseObjectArray
 '       TestIsPrime
@@ -232,17 +222,25 @@ Private Function pRandomDouble#(MinValue#, MaxValue#)
     pRandomDouble = (MaxValue - MinValue) * Rnd + MinValue
 End Function
 
-Private Sub pInsertionSortV(Arr, N&)
+Private Function pMin&(a&, b&)
+    If a < b Then
+        pMin = a
+    Else
+        pMin = b
+    End If
+End Function
+
+Private Sub pInsertionSortV(Arr, L&, R&)
     Dim i&
     Dim j&
     Dim Element
-    For i = 1 To N - 1
+    For i = L + 1 To R
         Element = Arr(i)
         j = i - 1
         Do While Element < Arr(j)
             Arr(j + 1) = Arr(j)
             j = j - 1
-            If j < 0 Then
+            If j < L Then
                 Exit Do
             End If
         Loop
@@ -250,30 +248,16 @@ Private Sub pInsertionSortV(Arr, N&)
     Next i
 End Sub
 
-Private Sub pMergeSortV(Arr, N&)
-    pMergeSortRV Arr, 0, N - 1
-End Sub
-
-Private Sub pMergeSortRV(Arr, First&, Last&)
-    Dim Middle&
-    If First < Last Then
-        Middle = (First + Last) \ 2
-        pMergeSortRV Arr, First, Middle
-        pMergeSortRV Arr, Middle + 1, Last
-        pMergeV Arr, First, Middle, Last
-    End If
-End Sub
-
-Private Sub pMergeV(Arr, First&, Middle&, Last&)
+Private Sub pMergeV(Arr, L&, M&, R&)
     Dim Temp()
-    ReDim Temp(0 To (Last - First + 1) - 1)
+    ReDim Temp(0 To (R - L + 1) - 1)
     Dim i&
     Dim j&
     Dim k&
-    i = First
-    j = Middle + 1
+    i = L
+    j = M + 1
     k = 0
-    Do While i <= Middle And j <= Last
+    Do While i <= M And j <= R
         If Arr(i) <= Arr(j) Then
             Temp(k) = Arr(i)
             k = k + 1
@@ -284,32 +268,33 @@ Private Sub pMergeV(Arr, First&, Middle&, Last&)
             j = j + 1
         End If
     Loop
-    Do While i <= Middle
+    Do While i <= M
         Temp(k) = Arr(i)
         k = k + 1
         i = i + 1
     Loop
-    Do While j <= Last
+    Do While j <= R
         Temp(k) = Arr(j)
         k = k + 1
         j = j + 1
     Loop
-    For i = First To Last
-        Arr(i) = Temp(i - First)
+    For i = L To R
+        Arr(i) = Temp(i - L)
     Next i
 End Sub
 
-Private Sub pInsertionSortS(Arr$(), N&, CompareMethod As VbCompareMethod)
+Private Sub pInsertionSortS(Arr$(), L&, R&, _
+Optional CompareMethod As VbCompareMethod = vbBinaryCompare)
     Dim i&
     Dim j&
     Dim Element$
-    For i = 1 To N - 1
+    For i = L + 1 To R
         Element = Arr(i)
         j = i - 1
         Do While StrComp(Element, Arr(j), CompareMethod) = -1
             Arr(j + 1) = Arr(j)
             j = j - 1
-            If j < 0 Then
+            If j < L Then
                 Exit Do
             End If
         Loop
@@ -317,33 +302,19 @@ Private Sub pInsertionSortS(Arr$(), N&, CompareMethod As VbCompareMethod)
     Next i
 End Sub
 
-Private Sub pMergeSortS(Arr$(), N&, CompareMethod As VbCompareMethod)
-    pMergeSortRS Arr, 0, N - 1, CompareMethod
-End Sub
-
-Private Sub pMergeSortRS(Arr$(), First&, Last&, _
-CompareMethod As VbCompareMethod)
-    Dim Middle&
-    If First < Last Then
-        Middle = (First + Last) \ 2
-        pMergeSortRS Arr, First, Middle, CompareMethod
-        pMergeSortRS Arr, Middle + 1, Last, CompareMethod
-        pMergeS Arr, First, Middle, Last, CompareMethod
-    End If
-End Sub
-
-Private Sub pMergeS(Arr$(), First&, Middle&, Last&, _
-CompareMethod As VbCompareMethod)
-    Dim Temp$()
-    ReDim Temp$(0 To (Last - First + 1) - 1)
+Private Sub pMergeS(Arr$(), L&, M&, R&, _
+Optional CompareMethod As VbCompareMethod = vbBinaryCompare)
+    Dim Temp()
+    ReDim Temp(0 To (R - L + 1) - 1)
     Dim i&
     Dim j&
     Dim k&
-    i = First
-    j = Middle + 1
+    i = L
+    j = M + 1
     k = 0
-    Do While i <= Middle And j <= Last
-        If StrComp(Arr(i), Arr(j), CompareMethod) < 1 Then
+    Do While i <= M And j <= R
+        If StrComp(Arr(i), Arr(j), _
+        CompareMethod) < 1 Then
             Temp(k) = Arr(i)
             k = k + 1
             i = i + 1
@@ -353,33 +324,33 @@ CompareMethod As VbCompareMethod)
             j = j + 1
         End If
     Loop
-    Do While i <= Middle
+    Do While i <= M
         Temp(k) = Arr(i)
         k = k + 1
         i = i + 1
     Loop
-    Do While j <= Last
+    Do While j <= R
         Temp(k) = Arr(j)
         k = k + 1
         j = j + 1
     Loop
-    For i = First To Last
-        Arr(i) = Temp(i - First)
+    For i = L To R
+        Arr(i) = Temp(i - L)
     Next i
 End Sub
 
-Private Sub pInsertionSortO(Arr, N&, Member$, CallType As VbCallType)
+Private Sub pInsertionSortO(Arr, L&, R&, Member$, CallType As VbCallType)
     Dim i&
     Dim j&
     Dim Element As Object
-    For i = 1 To N - 1
+    For i = L + 1 To R
         Set Element = Arr(i)
         j = i - 1
         Do While CallByName(Element, Member, CallType) < _
         CallByName(Arr(j), Member, CallType)
             Set Arr(j + 1) = Arr(j)
             j = j - 1
-            If j < 0 Then
+            If j < L Then
                 Exit Do
             End If
         Loop
@@ -387,32 +358,16 @@ Private Sub pInsertionSortO(Arr, N&, Member$, CallType As VbCallType)
     Next i
 End Sub
 
-Private Sub pMergeSortO(Arr, N&, Member$, CallType As VbCallType)
-    pMergeSortRO Arr, 0, N - 1, Member, CallType
-End Sub
-
-Private Sub pMergeSortRO(Arr, First&, Last&, Member$, _
-CallType As VbCallType)
-    Dim Middle&
-    If First < Last Then
-        Middle = (First + Last) \ 2
-        pMergeSortRO Arr, First, Middle, Member, CallType
-        pMergeSortRO Arr, Middle + 1, Last, Member, CallType
-        pMergeO Arr, First, Middle, Last, Member, CallType
-    End If
-End Sub
-
-Private Sub pMergeO(Arr, First&, Middle&, Last&, Member$, _
-CallType As VbCallType)
-    Dim Temp() As Object
-    ReDim Temp(0 To (Last - First + 1) - 1)
+Private Sub pMergeO(Arr, L&, M&, R&, Member$, CallType As VbCallType)
+    Dim Temp()
+    ReDim Temp(0 To (R - L + 1) - 1)
     Dim i&
     Dim j&
     Dim k&
-    i = First
-    j = Middle + 1
+    i = L
+    j = M + 1
     k = 0
-    Do While i <= Middle And j <= Last
+    Do While i <= M And j <= R
         If CallByName(Arr(i), Member, CallType) <= _
         CallByName(Arr(j), Member, CallType) Then
             Set Temp(k) = Arr(i)
@@ -424,21 +379,20 @@ CallType As VbCallType)
             j = j + 1
         End If
     Loop
-    Do While i <= Middle
+    Do While i <= M
         Set Temp(k) = Arr(i)
         k = k + 1
         i = i + 1
     Loop
-    Do While j <= Last
+    Do While j <= R
         Set Temp(k) = Arr(j)
         k = k + 1
         j = j + 1
     Loop
-    For i = First To Last
-        Set Arr(i) = Temp(i - First)
+    For i = L To R
+        Set Arr(i) = Temp(i - L)
     Next i
 End Sub
-
 
 'Typed Array Functions====================================================
 '=========================================================================
@@ -1154,64 +1108,111 @@ End Function
 '======================================================================
 
 Public Sub SortArray(Arr)
+    Const RUN& = 32
+    Dim N&
+    Dim L&
+    Dim M&
+    Dim R&
+    Dim i&
+    Dim LB&
+    Dim UB&
     If Not IsArray(Arr) Then
         Err.Raise 5
     End If
-    Dim N&
-    N = SizeOfArray(Arr)
-    If N = 0 Then
-        Exit Sub
-    End If
-    If N < 51 Then
-        pInsertionSortV Arr, N
-    Else
-        pMergeSortV Arr, N
-    End If
+    LB = LBound(Arr)
+    UB = UBound(Arr)
+    For i = LB To UB Step RUN
+        pInsertionSortV Arr, i, pMin(i + RUN - 1, UB)
+    Next i
+    N = RUN
+    Do While N <= UB
+        L = LB
+        Do While L <= UB
+            M = L + N - 1
+            R = pMin(L + 2 * N - 1, UB)
+            If M < R Then
+                pMergeV Arr, L, M, R
+            End If
+            L = L + 2 * N
+        Loop
+        N = N * 2
+    Loop
 End Sub
 
 Public Sub SortStringArray(Arr$(), _
 Optional CompareMethod As VbCompareMethod = vbBinaryCompare)
-    Dim N As Long
-    N = SizeOfArray(Arr)
-    If N = 0 Then
-        Exit Sub
-    End If
-    If N < 51 Then
-        pInsertionSortS Arr, N, CompareMethod
-    Else
-        pMergeSortS Arr, N, CompareMethod
-    End If
+    Const RUN& = 32
+    Dim N&
+    Dim L&
+    Dim M&
+    Dim R&
+    Dim i&
+    Dim LB&
+    Dim UB&
+    LB = LBound(Arr)
+    UB = UBound(Arr)
+    For i = LB To UB Step RUN
+        pInsertionSortS Arr, i, pMin(i + RUN - 1, UB), CompareMethod
+    Next i
+    N = RUN
+    Do While N <= UB
+        L = LB
+        Do While L <= UB
+            M = L + N - 1
+            R = pMin(L + 2 * N - 1, UB)
+            If M < R Then
+                pMergeS Arr, L, M, R, CompareMethod
+            End If
+            L = L + 2 * N
+        Loop
+        N = N * 2
+    Loop
 End Sub
 
 Public Sub SortObjectArray(Arr, Member$, _
 Optional MemberIsMethod As Boolean = False)
-    If Not IsArray(Arr) Then
-        Err.Raise 5
-    End If
+    Const RUN& = 32
     Dim N&
-    N = SizeOfArray(Arr)
-    If N = 0 Then
-        Exit Sub
-    End If
+    Dim L&
+    Dim M&
+    Dim R&
     Dim i&
-    For i = LBound(Arr) To UBound(Arr)
-        If Not IsObject(Arr(i)) Then
-            Err.Raise 5
-        End If
-    Next i
+    Dim LB&
+    Dim UB&
     Dim CallType As VbCallType
     If MemberIsMethod Then
         CallType = VbMethod
     Else
         CallType = VbGet
     End If
-    If N < 51 Then
-        pInsertionSortO Arr, N, Member, CallType
-    Else
-        pMergeSortO Arr, N, Member, CallType
+    If Not IsArray(Arr) Then
+        Err.Raise 5
     End If
+    LB = LBound(Arr)
+    UB = UBound(Arr)
+    For i = LB To UB
+        If Not IsObject(Arr(i)) Then
+            Err.Raise 5
+        End If
+    Next i
+    For i = LB To UB Step RUN
+        pInsertionSortO Arr, i, pMin(i + RUN - 1, UB), Member, CallType
+    Next i
+    N = RUN
+    Do While N <= UB
+        L = 0
+        Do While L <= UB
+            M = L + N - 1
+            R = pMin(L + 2 * N - 1, UB)
+            If M < R Then
+                pMergeO Arr, L, M, R, Member, CallType
+            End If
+            L = L + 2 * N
+        Loop
+        N = N * 2
+    Loop
 End Sub
-    
+
 
 'Convert===============================================================
 '======================================================================
@@ -1535,15 +1536,10 @@ Private Function TestmodArray() As Boolean
         TestShuffleObjectArray And _
         TestSizeOfArray
     TestmodArray = TestmodArray And _
+        TestMin And _
         TestSortArray And _
-        TestInsertionSortV And _
-        TestMergeSortV And _
         TestSortStringArray And _
-        TestInsertionSortS And _
-        TestMergeSortS And _
         TestSortObjectArray And _
-        TestInsertionSortO And _
-        TestMergeSortO And _
         TestIsPrime And _
         TestRandomLong And _
         TestRandomDouble
@@ -3653,19 +3649,58 @@ Private Function TestSizeOfArray() As Boolean
     
 End Function
 
+Private Function TestMin() As Boolean
+    
+    TestMin = True
+    
+    'Same pos
+    If pMin(1, 1) <> 1 Then
+        TestMin = False
+        Debug.Print "Same pos"
+    End If
+    
+    'Same neg
+    If pMin(-1, -1) <> -1 Then
+        TestMin = False
+        Debug.Print "Same neg"
+    End If
+    
+    'Negs
+    If pMin(-1, -2) <> -2 Then
+        TestMin = False
+        Debug.Print "Negs"
+    End If
+    
+    'Pos
+    If pMin(1, 2) <> 1 Then
+        TestMin = False
+        Debug.Print "Pos"
+    End If
+    
+    'Pos Neg
+    If pMin(-1, 1) <> -1 Then
+        TestMin = False
+        Debug.Print "Pos Neg"
+    End If
+    
+    Debug.Print "TestMin: " & TestMin
+    
+End Function
+
 Private Function TestSortArray() As Boolean
 
     TestSortArray = True
     
     Dim Arr() As Long
-
+    
+    Dim i As Long
+    
     'Unitialized
     On Error Resume Next
     SortArray Arr
-    If Err.Number <> 0 Then
+    If Err.Number <> 9 Then
         TestSortArray = False
         Debug.Print "Uninitialized"
-        Debug.Print "Error " & Err.Number & ": " & Err.Description
     End If
     On Error GoTo 0
 
@@ -3693,7 +3728,7 @@ Private Function TestSortArray() As Boolean
     Arr(3) <> 4 Or _
     Arr(4) <> 5 Then
         TestSortArray = False
-        Debug.Print "Shuffled"
+        Debug.Print "Shuffled Insertion Only"
     End If
 
     'Sorted
@@ -3709,7 +3744,7 @@ Private Function TestSortArray() As Boolean
     Arr(3) <> 4 Or _
     Arr(4) <> 5 Then
         TestSortArray = False
-        Debug.Print "Sorted"
+        Debug.Print "Sorted Insertion Only"
     End If
 
     'Reverse Sorted
@@ -3725,7 +3760,7 @@ Private Function TestSortArray() As Boolean
     Arr(3) <> 4 Or _
     Arr(4) <> 5 Then
         TestSortArray = False
-        Debug.Print "Reverse sorted"
+        Debug.Print "Reverse sorted Insertion Only"
     End If
 
     'Same
@@ -3741,200 +3776,252 @@ Private Function TestSortArray() As Boolean
     Arr(3) <> 1 Or _
     Arr(4) <> 1 Then
         TestSortArray = False
-        Debug.Print "Same"
+        Debug.Print "Same Insertion Only"
     End If
 
+    ReDim Arr(0 To 49)
+    
+    'Shuffled
+    Arr(0) = 21
+    Arr(1) = 15
+    Arr(2) = 40
+    Arr(3) = 7
+    Arr(4) = 48
+    Arr(5) = 17
+    Arr(6) = 37
+    Arr(7) = 23
+    Arr(8) = 49
+    Arr(9) = 27
+    Arr(10) = 39
+    Arr(11) = 25
+    Arr(12) = 42
+    Arr(13) = 46
+    Arr(14) = 43
+    Arr(15) = 44
+    Arr(16) = 38
+    Arr(17) = 6
+    Arr(18) = 13
+    Arr(19) = 47
+    Arr(20) = 34
+    Arr(21) = 29
+    Arr(22) = 33
+    Arr(23) = 2
+    Arr(24) = 28
+    Arr(25) = 16
+    Arr(26) = 18
+    Arr(27) = 5
+    Arr(28) = 10
+    Arr(29) = 32
+    Arr(30) = 30
+    Arr(31) = 35
+    Arr(32) = 36
+    Arr(33) = 3
+    Arr(34) = 20
+    Arr(35) = 1
+    Arr(36) = 11
+    Arr(37) = 12
+    Arr(38) = 4
+    Arr(39) = 26
+    Arr(40) = 31
+    Arr(41) = 0
+    Arr(42) = 45
+    Arr(43) = 19
+    Arr(44) = 22
+    Arr(45) = 9
+    Arr(46) = 41
+    Arr(47) = 14
+    Arr(48) = 8
+    Arr(49) = 24
+    SortArray Arr
+    For i = 0 To 49
+        If Arr(i) <> i Then
+            TestSortArray = False
+            Debug.Print "Shuffled merge"
+            Exit For
+        End If
+    Next i
+    
+    'Sorted
+    Arr(0) = 0
+    Arr(1) = 1
+    Arr(2) = 2
+    Arr(3) = 3
+    Arr(4) = 4
+    Arr(5) = 5
+    Arr(6) = 6
+    Arr(7) = 7
+    Arr(8) = 8
+    Arr(9) = 9
+    Arr(10) = 10
+    Arr(11) = 11
+    Arr(12) = 12
+    Arr(13) = 13
+    Arr(14) = 14
+    Arr(15) = 15
+    Arr(16) = 16
+    Arr(17) = 17
+    Arr(18) = 18
+    Arr(19) = 19
+    Arr(20) = 20
+    Arr(21) = 21
+    Arr(22) = 22
+    Arr(23) = 23
+    Arr(24) = 24
+    Arr(25) = 25
+    Arr(26) = 26
+    Arr(27) = 27
+    Arr(28) = 28
+    Arr(29) = 29
+    Arr(30) = 30
+    Arr(31) = 31
+    Arr(32) = 32
+    Arr(33) = 33
+    Arr(34) = 34
+    Arr(35) = 35
+    Arr(36) = 36
+    Arr(37) = 37
+    Arr(38) = 38
+    Arr(39) = 39
+    Arr(40) = 40
+    Arr(41) = 41
+    Arr(42) = 42
+    Arr(43) = 43
+    Arr(44) = 44
+    Arr(45) = 45
+    Arr(46) = 46
+    Arr(47) = 47
+    Arr(48) = 48
+    Arr(49) = 49
+    SortArray Arr
+    For i = 0 To 49
+        If Arr(i) <> i Then
+            TestSortArray = False
+            Debug.Print "Sorted merge"
+            Exit For
+        End If
+    Next i
+    
+    'Reverse Sorted
+    Arr(0) = 49
+    Arr(1) = 48
+    Arr(2) = 47
+    Arr(3) = 46
+    Arr(4) = 45
+    Arr(5) = 44
+    Arr(6) = 43
+    Arr(7) = 42
+    Arr(8) = 41
+    Arr(9) = 40
+    Arr(10) = 39
+    Arr(11) = 38
+    Arr(12) = 37
+    Arr(13) = 36
+    Arr(14) = 35
+    Arr(15) = 34
+    Arr(16) = 33
+    Arr(17) = 32
+    Arr(18) = 31
+    Arr(19) = 30
+    Arr(20) = 29
+    Arr(21) = 28
+    Arr(22) = 27
+    Arr(23) = 26
+    Arr(24) = 25
+    Arr(25) = 24
+    Arr(26) = 23
+    Arr(27) = 22
+    Arr(28) = 21
+    Arr(29) = 20
+    Arr(30) = 19
+    Arr(31) = 18
+    Arr(32) = 17
+    Arr(33) = 16
+    Arr(34) = 15
+    Arr(35) = 14
+    Arr(36) = 13
+    Arr(37) = 12
+    Arr(38) = 11
+    Arr(39) = 10
+    Arr(40) = 9
+    Arr(41) = 8
+    Arr(42) = 7
+    Arr(43) = 6
+    Arr(44) = 5
+    Arr(45) = 4
+    Arr(46) = 3
+    Arr(47) = 2
+    Arr(48) = 1
+    Arr(49) = 0
+    SortArray Arr
+    For i = 0 To 49
+        If Arr(i) <> i Then
+            TestSortArray = False
+            Debug.Print "Reverse Sorted merge"
+            Exit For
+        End If
+    Next i
+    
+    'Same
+    Arr(0) = 1
+    Arr(1) = 1
+    Arr(2) = 1
+    Arr(3) = 1
+    Arr(4) = 1
+    Arr(5) = 1
+    Arr(6) = 1
+    Arr(7) = 1
+    Arr(8) = 1
+    Arr(9) = 1
+    Arr(10) = 1
+    Arr(11) = 1
+    Arr(12) = 1
+    Arr(13) = 1
+    Arr(14) = 1
+    Arr(15) = 1
+    Arr(16) = 1
+    Arr(17) = 1
+    Arr(18) = 1
+    Arr(19) = 1
+    Arr(20) = 1
+    Arr(21) = 1
+    Arr(22) = 1
+    Arr(23) = 1
+    Arr(24) = 1
+    Arr(25) = 1
+    Arr(26) = 1
+    Arr(27) = 1
+    Arr(28) = 1
+    Arr(29) = 1
+    Arr(30) = 1
+    Arr(31) = 1
+    Arr(32) = 1
+    Arr(33) = 1
+    Arr(34) = 1
+    Arr(35) = 1
+    Arr(36) = 1
+    Arr(37) = 1
+    Arr(38) = 1
+    Arr(39) = 1
+    Arr(40) = 1
+    Arr(41) = 1
+    Arr(42) = 1
+    Arr(43) = 1
+    Arr(44) = 1
+    Arr(45) = 1
+    Arr(46) = 1
+    Arr(47) = 1
+    Arr(48) = 1
+    Arr(49) = 1
+    SortArray Arr
+    For i = 0 To 49
+        If Arr(i) <> 1 Then
+            TestSortArray = False
+            Debug.Print "Same merge"
+            Exit For
+        End If
+    Next i
+    
     Debug.Print "TestSortArray: " & TestSortArray
-
-End Function
-
-Private Function TestInsertionSortV() As Boolean
-
-    TestInsertionSortV = True
-
-    Dim Arr() As Long
-
-    'Unitialized
-    On Error Resume Next
-    pInsertionSortV Arr, 0
-    If Err.Number <> 0 Then
-        TestInsertionSortV = False
-        Debug.Print "Uninitialized"
-        Debug.Print "Error " & Err.Number & ": " & Err.Description
-    End If
-    On Error GoTo 0
-
-    'One
-    ReDim Arr(0 To 0) As Long
-    Arr(0) = 1
-    pInsertionSortV Arr, 1
-    If Arr(0) <> 1 Then
-        TestInsertionSortV = False
-        Debug.Print "One"
-    End If
-    
-    ReDim Arr(0 To 4) As Long
-
-    'Shuffled
-    Arr(0) = 3
-    Arr(1) = 1
-    Arr(2) = 4
-    Arr(3) = 5
-    Arr(4) = 2
-    pInsertionSortV Arr, 5
-    If Arr(0) <> 1 Or _
-    Arr(1) <> 2 Or _
-    Arr(2) <> 3 Or _
-    Arr(3) <> 4 Or _
-    Arr(4) <> 5 Then
-        TestInsertionSortV = False
-        Debug.Print "Shuffled"
-    End If
-
-    'Sorted
-    Arr(0) = 1
-    Arr(1) = 2
-    Arr(2) = 3
-    Arr(3) = 4
-    Arr(4) = 5
-    pInsertionSortV Arr, 5
-    If Arr(0) <> 1 Or _
-    Arr(1) <> 2 Or _
-    Arr(2) <> 3 Or _
-    Arr(3) <> 4 Or _
-    Arr(4) <> 5 Then
-        TestInsertionSortV = False
-        Debug.Print "Sorted"
-    End If
-
-    'Reverse Sorted
-    Arr(0) = 5
-    Arr(1) = 4
-    Arr(2) = 3
-    Arr(3) = 2
-    Arr(4) = 1
-    pInsertionSortV Arr, 5
-    If Arr(0) <> 1 Or _
-    Arr(1) <> 2 Or _
-    Arr(2) <> 3 Or _
-    Arr(3) <> 4 Or _
-    Arr(4) <> 5 Then
-        TestInsertionSortV = False
-        Debug.Print "Reverse sorted"
-    End If
-
-    'Same
-    Arr(0) = 1
-    Arr(1) = 1
-    Arr(2) = 1
-    Arr(3) = 1
-    Arr(4) = 1
-    pInsertionSortV Arr, 5
-    If Arr(0) <> 1 Or _
-    Arr(1) <> 1 Or _
-    Arr(2) <> 1 Or _
-    Arr(3) <> 1 Or _
-    Arr(4) <> 1 Then
-        TestInsertionSortV = False
-        Debug.Print "Same"
-    End If
-
-    Debug.Print "TestInsertionSortV: " & TestInsertionSortV
-
-End Function
-
-Private Function TestMergeSortV() As Boolean
-
-    TestMergeSortV = True
-
-    Dim Arr() As Long
-
-    'Unitialized
-    On Error Resume Next
-    pMergeSortV Arr, 0
-    If Err.Number <> 0 Then
-        TestMergeSortV = False
-        Debug.Print "Uninitialized"
-        Debug.Print "Error " & Err.Number & ": " & Err.Description
-    End If
-    On Error GoTo 0
-
-    'One
-    ReDim Arr(0 To 0) As Long
-    Arr(0) = 1
-    pMergeSortV Arr, 1
-    If Arr(0) <> 1 Then
-        TestMergeSortV = False
-        Debug.Print "One"
-    End If
-    
-    ReDim Arr(0 To 4) As Long
-
-    'Shuffled
-    Arr(0) = 3
-    Arr(1) = 1
-    Arr(2) = 4
-    Arr(3) = 5
-    Arr(4) = 2
-    pMergeSortV Arr, 5
-    If Arr(0) <> 1 Or _
-    Arr(1) <> 2 Or _
-    Arr(2) <> 3 Or _
-    Arr(3) <> 4 Or _
-    Arr(4) <> 5 Then
-        TestMergeSortV = False
-        Debug.Print "Shuffled"
-    End If
-
-    'Sorted
-    Arr(0) = 1
-    Arr(1) = 2
-    Arr(2) = 3
-    Arr(3) = 4
-    Arr(4) = 5
-    pMergeSortV Arr, 5
-    If Arr(0) <> 1 Or _
-    Arr(1) <> 2 Or _
-    Arr(2) <> 3 Or _
-    Arr(3) <> 4 Or _
-    Arr(4) <> 5 Then
-        TestMergeSortV = False
-        Debug.Print "Sorted"
-    End If
-
-    'Reverse Sorted
-    Arr(0) = 5
-    Arr(1) = 4
-    Arr(2) = 3
-    Arr(3) = 2
-    Arr(4) = 1
-    pMergeSortV Arr, 5
-    If Arr(0) <> 1 Or _
-    Arr(1) <> 2 Or _
-    Arr(2) <> 3 Or _
-    Arr(3) <> 4 Or _
-    Arr(4) <> 5 Then
-        TestMergeSortV = False
-        Debug.Print "Reverse sorted"
-    End If
-
-    'Same
-    Arr(0) = 1
-    Arr(1) = 1
-    Arr(2) = 1
-    Arr(3) = 1
-    Arr(4) = 1
-    pMergeSortV Arr, 5
-    If Arr(0) <> 1 Or _
-    Arr(1) <> 1 Or _
-    Arr(2) <> 1 Or _
-    Arr(3) <> 1 Or _
-    Arr(4) <> 1 Then
-        TestMergeSortV = False
-        Debug.Print "Same"
-    End If
-
-    Debug.Print "TestMergeSortV: " & TestMergeSortV
 
 End Function
 
@@ -3943,14 +4030,16 @@ Private Function TestSortStringArray() As Boolean
     TestSortStringArray = True
 
     Dim Arr() As String
-
+    
+    Dim i As Long
+    Dim j As Long
+    
     'Unitialized
     On Error Resume Next
     SortStringArray Arr
-    If Err.Number <> 0 Then
+    If Err.Number <> 9 Then
         TestSortStringArray = False
         Debug.Print "Uninitialized"
-        Debug.Print "Error " & Err.Number & ": " & Err.Description
     End If
     On Error GoTo 0
 
@@ -3978,9 +4067,25 @@ Private Function TestSortStringArray() As Boolean
     Arr(3) <> "D" Or _
     Arr(4) <> "E" Then
         TestSortStringArray = False
-        Debug.Print "Shuffled"
+        Debug.Print "Shuffled Insertion Only"
     End If
-
+    
+    'Compare Text
+    Arr(0) = "b"
+    Arr(1) = "A"
+    Arr(2) = "C"
+    Arr(3) = "a"
+    Arr(4) = "B"
+    SortStringArray Arr, vbTextCompare
+    If Arr(0) <> "A" Or _
+    Arr(1) <> "a" Or _
+    Arr(2) <> "b" Or _
+    Arr(3) <> "B" Or _
+    Arr(4) <> "C" Then
+        TestSortStringArray = False
+        Debug.Print "Shuffled Insertion Only Text Compare"
+    End If
+    
     'Sorted
     Arr(0) = "A"
     Arr(1) = "B"
@@ -3994,7 +4099,7 @@ Private Function TestSortStringArray() As Boolean
     Arr(3) <> "D" Or _
     Arr(4) <> "E" Then
         TestSortStringArray = False
-        Debug.Print "Sorted"
+        Debug.Print "Sorted Insertion Only"
     End If
 
     'Reverse Sorted
@@ -4010,7 +4115,7 @@ Private Function TestSortStringArray() As Boolean
     Arr(3) <> "D" Or _
     Arr(4) <> "E" Then
         TestSortStringArray = False
-        Debug.Print "Reverse sorted"
+        Debug.Print "Reverse sorted Insertion Only"
     End If
 
     'Same
@@ -4026,201 +4131,354 @@ Private Function TestSortStringArray() As Boolean
     Arr(3) <> "A" Or _
     Arr(4) <> "A" Then
         TestSortStringArray = False
-        Debug.Print "Same"
+        Debug.Print "Same Insertion Only"
     End If
-
+    
+    ReDim Arr(0 To 51)
+    
+    'Shuffled
+    Arr(0) = "J"
+    Arr(1) = "M"
+    Arr(2) = "b"
+    Arr(3) = "N"
+    Arr(4) = "c"
+    Arr(5) = "O"
+    Arr(6) = "C"
+    Arr(7) = "E"
+    Arr(8) = "h"
+    Arr(9) = "G"
+    Arr(10) = "A"
+    Arr(11) = "m"
+    Arr(12) = "H"
+    Arr(13) = "D"
+    Arr(14) = "L"
+    Arr(15) = "d"
+    Arr(16) = "X"
+    Arr(17) = "o"
+    Arr(18) = "s"
+    Arr(19) = "y"
+    Arr(20) = "g"
+    Arr(21) = "e"
+    Arr(22) = "j"
+    Arr(23) = "K"
+    Arr(24) = "S"
+    Arr(25) = "l"
+    Arr(26) = "F"
+    Arr(27) = "U"
+    Arr(28) = "f"
+    Arr(29) = "q"
+    Arr(30) = "v"
+    Arr(31) = "r"
+    Arr(32) = "V"
+    Arr(33) = "Y"
+    Arr(34) = "i"
+    Arr(35) = "Q"
+    Arr(36) = "T"
+    Arr(37) = "x"
+    Arr(38) = "Z"
+    Arr(39) = "w"
+    Arr(40) = "W"
+    Arr(41) = "P"
+    Arr(42) = "a"
+    Arr(43) = "I"
+    Arr(44) = "B"
+    Arr(45) = "z"
+    Arr(46) = "R"
+    Arr(47) = "p"
+    Arr(48) = "n"
+    Arr(49) = "t"
+    Arr(50) = "u"
+    Arr(51) = "k"
+    SortStringArray Arr, vbBinaryCompare
+    j = 0
+    For i = 65 To 90
+        If Arr(j) <> Chr(i) Then
+            TestSortStringArray = False
+            Debug.Print "Shuffled merge"
+            Exit For
+        End If
+        j = j + 1
+    Next i
+    For i = 97 To 122
+        If Arr(j) <> Chr(i) Then
+            TestSortStringArray = False
+            Debug.Print "Shuffled merge"
+            Exit For
+        End If
+        j = j + 1
+    Next i
+    
+    'Compare Text
+    Arr(0) = "J"
+    Arr(1) = "M"
+    Arr(2) = "b"
+    Arr(3) = "N"
+    Arr(4) = "c"
+    Arr(5) = "O"
+    Arr(6) = "C"
+    Arr(7) = "E"
+    Arr(8) = "h"
+    Arr(9) = "G"
+    Arr(10) = "A"
+    Arr(11) = "m"
+    Arr(12) = "H"
+    Arr(13) = "D"
+    Arr(14) = "L"
+    Arr(15) = "d"
+    Arr(16) = "X"
+    Arr(17) = "o"
+    Arr(18) = "s"
+    Arr(19) = "y"
+    Arr(20) = "g"
+    Arr(21) = "e"
+    Arr(22) = "j"
+    Arr(23) = "K"
+    Arr(24) = "S"
+    Arr(25) = "l"
+    Arr(26) = "F"
+    Arr(27) = "U"
+    Arr(28) = "f"
+    Arr(29) = "q"
+    Arr(30) = "v"
+    Arr(31) = "r"
+    Arr(32) = "V"
+    Arr(33) = "Y"
+    Arr(34) = "i"
+    Arr(35) = "Q"
+    Arr(36) = "T"
+    Arr(37) = "x"
+    Arr(38) = "Z"
+    Arr(39) = "w"
+    Arr(40) = "W"
+    Arr(41) = "P"
+    Arr(42) = "a"
+    Arr(43) = "I"
+    Arr(44) = "B"
+    Arr(45) = "z"
+    Arr(46) = "R"
+    Arr(47) = "p"
+    Arr(48) = "n"
+    Arr(49) = "t"
+    Arr(50) = "u"
+    Arr(51) = "k"
+    SortStringArray Arr, vbTextCompare
+    j = 0
+    For i = 65 To 90
+        If StrComp(Arr(j), Chr(i), vbTextCompare) <> 0 Or _
+        StrComp(Arr(j + 1), Chr(i), vbTextCompare) <> 0 Then
+            TestSortStringArray = False
+            Debug.Print "Shuffled merge Text Compare"
+        End If
+        j = j + 2
+    Next i
+    
+    'Sorted
+    Arr(0) = "A"
+    Arr(1) = "B"
+    Arr(2) = "C"
+    Arr(3) = "D"
+    Arr(4) = "E"
+    Arr(5) = "F"
+    Arr(6) = "G"
+    Arr(7) = "H"
+    Arr(8) = "I"
+    Arr(9) = "J"
+    Arr(10) = "K"
+    Arr(11) = "L"
+    Arr(12) = "M"
+    Arr(13) = "N"
+    Arr(14) = "O"
+    Arr(15) = "P"
+    Arr(16) = "Q"
+    Arr(17) = "R"
+    Arr(18) = "S"
+    Arr(19) = "T"
+    Arr(20) = "U"
+    Arr(21) = "V"
+    Arr(22) = "W"
+    Arr(23) = "X"
+    Arr(24) = "Y"
+    Arr(25) = "Z"
+    Arr(26) = "a"
+    Arr(27) = "b"
+    Arr(28) = "c"
+    Arr(29) = "d"
+    Arr(30) = "e"
+    Arr(31) = "f"
+    Arr(32) = "g"
+    Arr(33) = "h"
+    Arr(34) = "i"
+    Arr(35) = "j"
+    Arr(36) = "k"
+    Arr(37) = "l"
+    Arr(38) = "m"
+    Arr(39) = "n"
+    Arr(40) = "o"
+    Arr(41) = "p"
+    Arr(42) = "q"
+    Arr(43) = "r"
+    Arr(44) = "s"
+    Arr(45) = "t"
+    Arr(46) = "u"
+    Arr(47) = "v"
+    Arr(48) = "w"
+    Arr(49) = "x"
+    Arr(50) = "y"
+    Arr(51) = "z"
+    SortStringArray Arr, vbBinaryCompare
+    j = 0
+    For i = 65 To 90
+        If Arr(j) <> Chr(i) Then
+            TestSortStringArray = False
+            Debug.Print "Shuffled merge"
+            Exit For
+        End If
+        j = j + 1
+    Next i
+    For i = 97 To 122
+        If Arr(j) <> Chr(i) Then
+            TestSortStringArray = False
+            Debug.Print "Shuffled merge"
+            Exit For
+        End If
+        j = j + 1
+    Next i
+    
+    'Reverse sorted
+    Arr(0) = "Z"
+    Arr(1) = "z"
+    Arr(2) = "Y"
+    Arr(3) = "y"
+    Arr(4) = "X"
+    Arr(5) = "x"
+    Arr(6) = "W"
+    Arr(7) = "w"
+    Arr(8) = "V"
+    Arr(9) = "v"
+    Arr(10) = "U"
+    Arr(11) = "u"
+    Arr(12) = "T"
+    Arr(13) = "t"
+    Arr(14) = "S"
+    Arr(15) = "s"
+    Arr(16) = "R"
+    Arr(17) = "r"
+    Arr(18) = "Q"
+    Arr(19) = "q"
+    Arr(20) = "P"
+    Arr(21) = "p"
+    Arr(22) = "O"
+    Arr(23) = "o"
+    Arr(24) = "N"
+    Arr(25) = "n"
+    Arr(26) = "M"
+    Arr(27) = "m"
+    Arr(28) = "L"
+    Arr(29) = "l"
+    Arr(30) = "K"
+    Arr(31) = "k"
+    Arr(32) = "J"
+    Arr(33) = "j"
+    Arr(34) = "I"
+    Arr(35) = "i"
+    Arr(36) = "H"
+    Arr(37) = "h"
+    Arr(38) = "G"
+    Arr(39) = "g"
+    Arr(40) = "F"
+    Arr(41) = "f"
+    Arr(42) = "E"
+    Arr(43) = "e"
+    Arr(44) = "D"
+    Arr(45) = "d"
+    Arr(46) = "C"
+    Arr(47) = "c"
+    Arr(48) = "B"
+    Arr(49) = "b"
+    Arr(50) = "A"
+    Arr(51) = "a"
+    SortStringArray Arr, vbBinaryCompare
+    j = 0
+    For i = 65 To 90
+        If Arr(j) <> Chr(i) Then
+            TestSortStringArray = False
+            Debug.Print "Reverse sorted merge"
+            Exit For
+        End If
+        j = j + 1
+    Next i
+    For i = 97 To 122
+        If Arr(j) <> Chr(i) Then
+            TestSortStringArray = False
+            Debug.Print "Reverse sorted merge"
+            Exit For
+        End If
+        j = j + 1
+    Next i
+    
+    'Same
+    Arr(0) = "A"
+    Arr(1) = "A"
+    Arr(2) = "A"
+    Arr(3) = "A"
+    Arr(4) = "A"
+    Arr(5) = "A"
+    Arr(6) = "A"
+    Arr(7) = "A"
+    Arr(8) = "A"
+    Arr(9) = "A"
+    Arr(10) = "A"
+    Arr(11) = "A"
+    Arr(12) = "A"
+    Arr(13) = "A"
+    Arr(14) = "A"
+    Arr(15) = "A"
+    Arr(16) = "A"
+    Arr(17) = "A"
+    Arr(18) = "A"
+    Arr(19) = "A"
+    Arr(20) = "A"
+    Arr(21) = "A"
+    Arr(22) = "A"
+    Arr(23) = "A"
+    Arr(24) = "A"
+    Arr(25) = "A"
+    Arr(26) = "A"
+    Arr(27) = "A"
+    Arr(28) = "A"
+    Arr(29) = "A"
+    Arr(30) = "A"
+    Arr(31) = "A"
+    Arr(32) = "A"
+    Arr(33) = "A"
+    Arr(34) = "A"
+    Arr(35) = "A"
+    Arr(36) = "A"
+    Arr(37) = "A"
+    Arr(38) = "A"
+    Arr(39) = "A"
+    Arr(40) = "A"
+    Arr(41) = "A"
+    Arr(42) = "A"
+    Arr(43) = "A"
+    Arr(44) = "A"
+    Arr(45) = "A"
+    Arr(46) = "A"
+    Arr(47) = "A"
+    Arr(48) = "A"
+    Arr(49) = "A"
+    Arr(50) = "A"
+    Arr(51) = "A"
+    SortStringArray Arr, vbBinaryCompare
+    For i = 0 To 51
+        If Arr(i) <> "A" Then
+            TestSortStringArray = False
+            Debug.Print "Same merge"
+        End If
+    Next i
+    
     Debug.Print "TestSortStringArray: " & TestSortStringArray
 
-End Function
-
-Private Function TestInsertionSortS() As Boolean
-
-    TestInsertionSortS = True
-
-    Dim Arr() As String
-
-    'Unitialized
-    On Error Resume Next
-    pInsertionSortS Arr, 0, vbBinaryCompare
-    If Err.Number <> 0 Then
-        TestInsertionSortS = False
-        Debug.Print "Uninitialized"
-        Debug.Print "Error " & Err.Number & ": " & Err.Description
-    End If
-    On Error GoTo 0
-
-    'One
-    ReDim Arr(0 To 0) As String
-    Arr(0) = "A"
-    pInsertionSortS Arr, 1, vbBinaryCompare
-    If Arr(0) <> "A" Then
-        TestInsertionSortS = False
-        Debug.Print "One"
-    End If
-    
-    ReDim Arr(0 To 4) As String
-
-    'Shuffled
-    Arr(0) = "C"
-    Arr(1) = "A"
-    Arr(2) = "D"
-    Arr(3) = "E"
-    Arr(4) = "B"
-    pInsertionSortS Arr, 5, vbBinaryCompare
-    If Arr(0) <> "A" Or _
-    Arr(1) <> "B" Or _
-    Arr(2) <> "C" Or _
-    Arr(3) <> "D" Or _
-    Arr(4) <> "E" Then
-        TestInsertionSortS = False
-        Debug.Print "Shuffled"
-    End If
-
-    'Sorted
-    Arr(0) = "A"
-    Arr(1) = "B"
-    Arr(2) = "C"
-    Arr(3) = "D"
-    Arr(4) = "E"
-    pInsertionSortS Arr, 5, vbBinaryCompare
-    If Arr(0) <> "A" Or _
-    Arr(1) <> "B" Or _
-    Arr(2) <> "C" Or _
-    Arr(3) <> "D" Or _
-    Arr(4) <> "E" Then
-        TestInsertionSortS = False
-        Debug.Print "Sorted"
-    End If
-
-    'Reverse Sorted
-    Arr(0) = "E"
-    Arr(1) = "D"
-    Arr(2) = "C"
-    Arr(3) = "B"
-    Arr(4) = "A"
-    pInsertionSortS Arr, 5, vbBinaryCompare
-    If Arr(0) <> "A" Or _
-    Arr(1) <> "B" Or _
-    Arr(2) <> "C" Or _
-    Arr(3) <> "D" Or _
-    Arr(4) <> "E" Then
-        TestInsertionSortS = False
-        Debug.Print "Reverse sorted"
-    End If
-
-    'Same
-    Arr(0) = "A"
-    Arr(1) = "A"
-    Arr(2) = "A"
-    Arr(3) = "A"
-    Arr(4) = "A"
-    pInsertionSortS Arr, 5, vbBinaryCompare
-    If Arr(0) <> "A" Or _
-    Arr(1) <> "A" Or _
-    Arr(2) <> "A" Or _
-    Arr(3) <> "A" Or _
-    Arr(4) <> "A" Then
-        TestInsertionSortS = False
-        Debug.Print "Same"
-    End If
-
-    Debug.Print "TestInsertionSortS: " & TestInsertionSortS
-    
-End Function
-
-Private Function TestMergeSortS() As Boolean
-
-    TestMergeSortS = True
-
-    Dim Arr() As String
-
-    'Unitialized
-    On Error Resume Next
-    pMergeSortS Arr, 0, vbBinaryCompare
-    If Err.Number <> 0 Then
-        TestMergeSortS = False
-        Debug.Print "Uninitialized"
-        Debug.Print "Error " & Err.Number & ": " & Err.Description
-    End If
-    On Error GoTo 0
-
-    'One
-    ReDim Arr(0 To 0) As String
-    Arr(0) = "A"
-    pMergeSortS Arr, 1, vbBinaryCompare
-    If Arr(0) <> "A" Then
-        TestMergeSortS = False
-        Debug.Print "One"
-    End If
-    
-    ReDim Arr(0 To 4) As String
-
-    'Shuffled
-    Arr(0) = "C"
-    Arr(1) = "A"
-    Arr(2) = "D"
-    Arr(3) = "E"
-    Arr(4) = "B"
-    pMergeSortS Arr, 5, vbBinaryCompare
-    If Arr(0) <> "A" Or _
-    Arr(1) <> "B" Or _
-    Arr(2) <> "C" Or _
-    Arr(3) <> "D" Or _
-    Arr(4) <> "E" Then
-        TestMergeSortS = False
-        Debug.Print "Shuffled"
-    End If
-
-    'Sorted
-    Arr(0) = "A"
-    Arr(1) = "B"
-    Arr(2) = "C"
-    Arr(3) = "D"
-    Arr(4) = "E"
-    pMergeSortS Arr, 5, vbBinaryCompare
-    If Arr(0) <> "A" Or _
-    Arr(1) <> "B" Or _
-    Arr(2) <> "C" Or _
-    Arr(3) <> "D" Or _
-    Arr(4) <> "E" Then
-        TestMergeSortS = False
-        Debug.Print "Sorted"
-    End If
-
-    'Reverse Sorted
-    Arr(0) = "E"
-    Arr(1) = "D"
-    Arr(2) = "C"
-    Arr(3) = "B"
-    Arr(4) = "A"
-    pMergeSortS Arr, 5, vbBinaryCompare
-    If Arr(0) <> "A" Or _
-    Arr(1) <> "B" Or _
-    Arr(2) <> "C" Or _
-    Arr(3) <> "D" Or _
-    Arr(4) <> "E" Then
-        TestMergeSortS = False
-        Debug.Print "Reverse sorted"
-    End If
-
-    'Same
-    Arr(0) = "A"
-    Arr(1) = "A"
-    Arr(2) = "A"
-    Arr(3) = "A"
-    Arr(4) = "A"
-    pMergeSortS Arr, 5, vbBinaryCompare
-    If Arr(0) <> "A" Or _
-    Arr(1) <> "A" Or _
-    Arr(2) <> "A" Or _
-    Arr(3) <> "A" Or _
-    Arr(4) <> "A" Then
-        TestMergeSortS = False
-        Debug.Print "Same"
-    End If
-
-    Debug.Print "TestMergeSortS: " & TestMergeSortS
-    
 End Function
 
 Private Function TestSortObjectArray() As Boolean
@@ -4290,7 +4548,7 @@ Private Function TestSortObjectArray() As Boolean
     Arr(3).Count <> 4 Or _
     Arr(4).Count <> 5 Then
         TestSortObjectArray = False
-        Debug.Print "Shuffled"
+        Debug.Print "Shuffled Insertion Only"
     End If
 
     'Sorted
@@ -4321,7 +4579,7 @@ Private Function TestSortObjectArray() As Boolean
     Arr(3).Count <> 4 Or _
     Arr(4).Count <> 5 Then
         TestSortObjectArray = False
-        Debug.Print "Sorted"
+        Debug.Print "Sorted Insertion Only"
     End If
 
     'Reverse Sorted
@@ -4352,7 +4610,7 @@ Private Function TestSortObjectArray() As Boolean
     Arr(3).Count <> 4 Or _
     Arr(4).Count <> 5 Then
         TestSortObjectArray = False
-        Debug.Print "Reverse sorted"
+        Debug.Print "Reverse sorted Insertion Only"
     End If
 
     'Same
@@ -4373,302 +4631,78 @@ Private Function TestSortObjectArray() As Boolean
     Arr(3).Count <> 1 Or _
     Arr(4).Count <> 1 Then
         TestSortObjectArray = False
-        Debug.Print "Same"
+        Debug.Print "Same Insertion Only"
     End If
 
+    ReDim Arr(0 To 36)
+    
+    Dim C As Collection
+    Dim i As Long
+    Dim j As Long
+        
+    'Shuffled
+    For i = 0 To 36
+        Set C = New Collection
+        For j = 1 To pRandomLong(0, 9)
+            C.Add j
+        Next j
+        Set Arr(i) = C
+    Next i
+    SortObjectArray Arr, "Count", True
+    For i = 0 To 36 - 1
+        If Arr(i).Count > Arr(i + 1).Count Then
+            TestSortObjectArray = False
+            Debug.Print "Shuffled merge"
+        End If
+    Next i
+        
+    'Sorted
+    For i = 0 To 36
+        Set C = New Collection
+        For j = 0 To i
+            C.Add j
+        Next j
+        Set Arr(i) = C
+    Next i
+    SortObjectArray Arr, "Count", True
+    For i = 0 To 36 - 1
+        If Arr(i).Count > Arr(i + 1).Count Then
+            TestSortObjectArray = False
+            Debug.Print "Sorted merge"
+        End If
+    Next i
+    
+    'Reverse Sorted
+    For i = 0 To 36
+        Set C = New Collection
+        For j = 36 To i Step -1
+            C.Add j
+        Next j
+        Set Arr(i) = C
+    Next i
+    SortObjectArray Arr, "Count", True
+    For i = 0 To 36 - 1
+        If Arr(i).Count > Arr(i + 1).Count Then
+            TestSortObjectArray = False
+            Debug.Print "Reverse Sorted merge"
+        End If
+    Next i
+    
+    'Same
+    For i = 0 To 36
+        Set C = New Collection
+        C.Add 1
+        Set Arr(i) = C
+    Next i
+    SortObjectArray Arr, "Count", True
+    For i = 0 To 36
+        If Arr(i).Count <> 1 Then
+            TestSortObjectArray = False
+            Debug.Print "Same merge"
+        End If
+    Next i
+    
     Debug.Print "TestSortObjectArray: " & TestSortObjectArray
-    
-End Function
-
-Private Function TestInsertionSortO() As Boolean
-
-    TestInsertionSortO = True
-
-    Dim Arr() As Object
-
-    'Unitialized
-    On Error Resume Next
-    pInsertionSortO Arr, 0, "Count", VbMethod
-    If Err.Number <> 0 Then
-        TestInsertionSortO = False
-        Debug.Print "Uninitialized"
-        Debug.Print "Error " & Err.Number & ": " & Err.Description
-    End If
-    On Error GoTo 0
-
-    'One
-    ReDim Arr(0 To 0) As Object
-    Set Arr(0) = New Collection
-    Arr(0).Add 1
-    pInsertionSortO Arr, 1, "Count", VbMethod
-    If Arr(0).Item(1) <> 1 Then
-        TestInsertionSortO = False
-        Debug.Print "One"
-    End If
-    
-    ReDim Arr(0 To 4) As Object
-
-    'Shuffled
-    Set Arr(0) = New Collection
-    Arr(0).Add 1
-    Arr(0).Add 1
-    Arr(0).Add 1
-    Set Arr(1) = New Collection
-    Arr(1).Add 1
-    Set Arr(2) = New Collection
-    Arr(2).Add 1
-    Arr(2).Add 1
-    Arr(2).Add 1
-    Arr(2).Add 1
-    Set Arr(3) = New Collection
-    Arr(3).Add 1
-    Arr(3).Add 1
-    Arr(3).Add 1
-    Arr(3).Add 1
-    Arr(3).Add 1
-    Set Arr(4) = New Collection
-    Arr(4).Add 1
-    Arr(4).Add 1
-    pInsertionSortO Arr, 5, "Count", VbMethod
-    If Arr(0).Count <> 1 Or _
-    Arr(1).Count <> 2 Or _
-    Arr(2).Count <> 3 Or _
-    Arr(3).Count <> 4 Or _
-    Arr(4).Count <> 5 Then
-        TestInsertionSortO = False
-        Debug.Print "Shuffled"
-    End If
-
-    'Sorted
-    Set Arr(0) = New Collection
-    Arr(0).Add 1
-    Set Arr(1) = New Collection
-    Arr(1).Add 1
-    Arr(1).Add 1
-    Set Arr(2) = New Collection
-    Arr(2).Add 1
-    Arr(2).Add 1
-    Arr(2).Add 1
-    Set Arr(3) = New Collection
-    Arr(3).Add 1
-    Arr(3).Add 1
-    Arr(3).Add 1
-    Arr(3).Add 1
-    Set Arr(4) = New Collection
-    Arr(4).Add 1
-    Arr(4).Add 1
-    Arr(4).Add 1
-    Arr(4).Add 1
-    Arr(4).Add 1
-    pInsertionSortO Arr, 5, "Count", VbMethod
-    If Arr(0).Count <> 1 Or _
-    Arr(1).Count <> 2 Or _
-    Arr(2).Count <> 3 Or _
-    Arr(3).Count <> 4 Or _
-    Arr(4).Count <> 5 Then
-        TestInsertionSortO = False
-        Debug.Print "Sorted"
-    End If
-
-    'Reverse Sorted
-    Set Arr(0) = New Collection
-    Arr(0).Add 1
-    Arr(0).Add 1
-    Arr(0).Add 1
-    Arr(0).Add 1
-    Arr(0).Add 1
-    Set Arr(1) = New Collection
-    Arr(1).Add 1
-    Arr(1).Add 1
-    Arr(1).Add 1
-    Arr(1).Add 1
-    Set Arr(2) = New Collection
-    Arr(2).Add 1
-    Arr(2).Add 1
-    Arr(2).Add 1
-    Set Arr(3) = New Collection
-    Arr(3).Add 1
-    Arr(3).Add 1
-    Set Arr(4) = New Collection
-    Arr(4).Add 1
-    pInsertionSortO Arr, 5, "Count", VbMethod
-    If Arr(0).Count <> 1 Or _
-    Arr(1).Count <> 2 Or _
-    Arr(2).Count <> 3 Or _
-    Arr(3).Count <> 4 Or _
-    Arr(4).Count <> 5 Then
-        TestInsertionSortO = False
-        Debug.Print "Reverse sorted"
-    End If
-
-    'Same
-    Set Arr(0) = New Collection
-    Arr(0).Add 1
-    Set Arr(1) = New Collection
-    Arr(1).Add 1
-    Set Arr(2) = New Collection
-    Arr(2).Add 1
-    Set Arr(3) = New Collection
-    Arr(3).Add 1
-    Set Arr(4) = New Collection
-    Arr(4).Add 1
-    pInsertionSortO Arr, 5, "Count", VbMethod
-    If Arr(0).Count <> 1 Or _
-    Arr(1).Count <> 1 Or _
-    Arr(2).Count <> 1 Or _
-    Arr(3).Count <> 1 Or _
-    Arr(4).Count <> 1 Then
-        TestInsertionSortO = False
-        Debug.Print "Same"
-    End If
-
-    Debug.Print "TestInsertionSortO: " & TestInsertionSortO
-    
-End Function
-
-Private Function TestMergeSortO() As Boolean
-
-    TestMergeSortO = True
-
-    Dim Arr() As Object
-
-    'Unitialized
-    On Error Resume Next
-    pMergeSortO Arr, 0, "Count", VbMethod
-    If Err.Number <> 0 Then
-        TestMergeSortO = False
-        Debug.Print "Uninitialized"
-        Debug.Print "Error " & Err.Number & ": " & Err.Description
-    End If
-    On Error GoTo 0
-
-    'One
-    ReDim Arr(0 To 0) As Object
-    Set Arr(0) = New Collection
-    Arr(0).Add 1
-    pMergeSortO Arr, 1, "Count", VbMethod
-    If Arr(0).Item(1) <> 1 Then
-        TestMergeSortO = False
-        Debug.Print "One"
-    End If
-    
-    ReDim Arr(0 To 4) As Object
-
-    'Shuffled
-    Set Arr(0) = New Collection
-    Arr(0).Add 1
-    Arr(0).Add 1
-    Arr(0).Add 1
-    Set Arr(1) = New Collection
-    Arr(1).Add 1
-    Set Arr(2) = New Collection
-    Arr(2).Add 1
-    Arr(2).Add 1
-    Arr(2).Add 1
-    Arr(2).Add 1
-    Set Arr(3) = New Collection
-    Arr(3).Add 1
-    Arr(3).Add 1
-    Arr(3).Add 1
-    Arr(3).Add 1
-    Arr(3).Add 1
-    Set Arr(4) = New Collection
-    Arr(4).Add 1
-    Arr(4).Add 1
-    pMergeSortO Arr, 5, "Count", VbMethod
-    If Arr(0).Count <> 1 Or _
-    Arr(1).Count <> 2 Or _
-    Arr(2).Count <> 3 Or _
-    Arr(3).Count <> 4 Or _
-    Arr(4).Count <> 5 Then
-        TestMergeSortO = False
-        Debug.Print "Shuffled"
-    End If
-
-    'Sorted
-    Set Arr(0) = New Collection
-    Arr(0).Add 1
-    Set Arr(1) = New Collection
-    Arr(1).Add 1
-    Arr(1).Add 1
-    Set Arr(2) = New Collection
-    Arr(2).Add 1
-    Arr(2).Add 1
-    Arr(2).Add 1
-    Set Arr(3) = New Collection
-    Arr(3).Add 1
-    Arr(3).Add 1
-    Arr(3).Add 1
-    Arr(3).Add 1
-    Set Arr(4) = New Collection
-    Arr(4).Add 1
-    Arr(4).Add 1
-    Arr(4).Add 1
-    Arr(4).Add 1
-    Arr(4).Add 1
-    pMergeSortO Arr, 5, "Count", VbMethod
-    If Arr(0).Count <> 1 Or _
-    Arr(1).Count <> 2 Or _
-    Arr(2).Count <> 3 Or _
-    Arr(3).Count <> 4 Or _
-    Arr(4).Count <> 5 Then
-        TestMergeSortO = False
-        Debug.Print "Sorted"
-    End If
-
-    'Reverse Sorted
-    Set Arr(0) = New Collection
-    Arr(0).Add 1
-    Arr(0).Add 1
-    Arr(0).Add 1
-    Arr(0).Add 1
-    Arr(0).Add 1
-    Set Arr(1) = New Collection
-    Arr(1).Add 1
-    Arr(1).Add 1
-    Arr(1).Add 1
-    Arr(1).Add 1
-    Set Arr(2) = New Collection
-    Arr(2).Add 1
-    Arr(2).Add 1
-    Arr(2).Add 1
-    Set Arr(3) = New Collection
-    Arr(3).Add 1
-    Arr(3).Add 1
-    Set Arr(4) = New Collection
-    Arr(4).Add 1
-    pMergeSortO Arr, 5, "Count", VbMethod
-    If Arr(0).Count <> 1 Or _
-    Arr(1).Count <> 2 Or _
-    Arr(2).Count <> 3 Or _
-    Arr(3).Count <> 4 Or _
-    Arr(4).Count <> 5 Then
-        TestMergeSortO = False
-        Debug.Print "Reverse sorted"
-    End If
-
-    'Same
-    Set Arr(0) = New Collection
-    Arr(0).Add 1
-    Set Arr(1) = New Collection
-    Arr(1).Add 1
-    Set Arr(2) = New Collection
-    Arr(2).Add 1
-    Set Arr(3) = New Collection
-    Arr(3).Add 1
-    Set Arr(4) = New Collection
-    Arr(4).Add 1
-    pMergeSortO Arr, 5, "Count", VbMethod
-    If Arr(0).Count <> 1 Or _
-    Arr(1).Count <> 1 Or _
-    Arr(2).Count <> 1 Or _
-    Arr(3).Count <> 1 Or _
-    Arr(4).Count <> 1 Then
-        TestMergeSortO = False
-        Debug.Print "Same"
-    End If
-
-    Debug.Print "TestMergeSortO: " & TestMergeSortO
     
 End Function
 
@@ -4743,14 +4777,15 @@ Private Function TestRandomLong() As Boolean
     Dim i&
     Dim j&
     
-    'Min > Max
-    On Error Resume Next
-    i = RandomLong(10, 1)
-    If Err.Number <> 5 Then
-        TestRandomLong = False
-        Debug.Print "Min > Max"
-    End If
-    On Error GoTo 0
+    'Min > Max 'Trusting private call
+'    On Error Resume Next
+'    i = pRandomLong(10, 1)
+'    'i = RandomLong(10, 1)
+'    If Err.Number <> 5 Then
+'        TestRandomLong = False
+'        Debug.Print "Min > Max"
+'    End If
+'    On Error GoTo 0
     
     Dim F1 As Boolean
     Dim F2 As Boolean
@@ -4758,7 +4793,7 @@ Private Function TestRandomLong() As Boolean
     Dim F4 As Boolean
     Dim F5 As Boolean
     For i = 1 To 100
-        j = RandomLong(1, 5)
+        j = pRandomLong(1, 5)
         Select Case j
             Case 1
                 F1 = True
@@ -4789,16 +4824,16 @@ Private Function TestRandomDouble() As Boolean
     TestRandomDouble = True
     
     Dim i&
-    Dim j&
+    Dim j#
     
-    'Min > Max
-    On Error Resume Next
-    i = RandomLong(10, 1)
-    If Err.Number <> 5 Then
-        TestRandomDouble = False
-        Debug.Print "Min > Max"
-    End If
-    On Error GoTo 0
+    'Min > Max 'Trusting private call
+'    On Error Resume Next
+'    i = pRandomDouble(10, 1)
+'    If Err.Number <> 5 Then
+'        TestRandomDouble = False
+'        Debug.Print "Min > Max"
+'    End If
+'    On Error GoTo 0
     
     Dim F1 As Boolean
     Dim F2 As Boolean
@@ -4806,7 +4841,7 @@ Private Function TestRandomDouble() As Boolean
     Dim F4 As Boolean
     Dim F5 As Boolean
     For i = 1 To 100
-        j = RandomLong(1, 5)
+        j = pRandomDouble(1, 5)
         Select Case CLng(j)
             Case 1
                 F1 = True

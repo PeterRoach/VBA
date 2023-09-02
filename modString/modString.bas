@@ -40,6 +40,8 @@ Option Explicit
 '        AscW2
 '        CountSubstring
 '        SI (String Interpolation)
+'        StartsWith
+'        EndsWith
 '        ReplaceNBSP
 '        TrimAll
 '        RemoveNonPrintableCharacters 'Does not remove new line characters
@@ -50,6 +52,8 @@ Option Explicit
 '        TestAscW2
 '        TestCountSubstring
 '        TestSI
+'        TestStartsWith
+'        TestEndsWith
 '        TestReplaceNBSP
 '        TestTrimAll
 '        TestRemoveNonPrintableCharacters
@@ -61,21 +65,25 @@ Option Explicit
 '  Example Usage:
 
 Private Sub Example()
-    
+
     Debug.Print AscW2(ChrW(65535))
-    
+
     Debug.Print CountSubstring("Hello, World", "world", vbTextCompare)
-    
+
     Debug.Print SI("Hello {}. My name is {}.", "World", "Peter")
-    
+
+    Debug.Print StartsWith("Hello, World!", "Hello")
+
+    Debug.Print EndsWith("Hello, World!", "World!")
+
     Debug.Print ReplaceNBSP(Chr(160)) = Chr(32)
-    
+
     Debug.Print TrimAll("   Hello,   World    ")
-    
+
     Debug.Print RemoveNonPrintableCharacters("Hello" & Chr(0) & vbNewLine & "World")
-    
+
     Debug.Print ReplaceNewLineCharacters("Hello" & vbNewLine & "World")
-    
+
     Debug.Print CleanText("  Hello   " & Chr(0) & vbNewLine & Chr(160) & "World")
 
 End Sub
@@ -244,15 +252,15 @@ Private Function TestmodString() As Boolean
         TestRemoveNonPrintableCharacters And _
         TestReplaceNewLineCharacters And _
         TestCleanText
-    
+
     Debug.Print "TestmodString: " & TestmodString
-    
+
 End Function
 
 Private Function TestAscW2() As Boolean
-    
+
     TestAscW2 = True
-    
+
     'Empty
     On Error Resume Next
     AscW2 ""
@@ -261,9 +269,9 @@ Private Function TestAscW2() As Boolean
         Debug.Print "Empty"
     End If
     On Error GoTo 0
-    
+
     Dim i&
-    
+
     '0 - 127
     For i = 0 To 127
         If AscW2(Chr(i)) <> i Then
@@ -272,7 +280,7 @@ Private Function TestAscW2() As Boolean
             Exit For
         End If
     Next i
-    
+
     '0 - 65535
     For i = 0 To 65535
         If AscW2(ChrW(i)) <> i Then
@@ -281,7 +289,7 @@ Private Function TestAscW2() As Boolean
             Exit For
         End If
     Next i
-    
+
     'Multiple characters
     For i = 0 To 65535
         If AscW2(ChrW(i) & "ello, World!") <> i Then
@@ -290,9 +298,9 @@ Private Function TestAscW2() As Boolean
             Exit For
         End If
     Next i
-    
+
     Debug.Print "TestAscW2: " & TestAscW2
-    
+
 End Function
 
 Private Function TestCountSubstring() As Boolean
@@ -312,7 +320,7 @@ Private Function TestCountSubstring() As Boolean
         TestCountSubstring = False
         Debug.Print "Empty3"
     End If
-    
+
     'Single char
 
         'Not there
@@ -358,7 +366,7 @@ Private Function TestCountSubstring() As Boolean
                 TestCountSubstring = False
                 Debug.Print "Single char Multiple there End"
             End If
-        
+
         'Compare method
             If CountSubstring("AABBCC", "c") <> 0 Then
                 TestCountSubstring = False
@@ -368,7 +376,7 @@ Private Function TestCountSubstring() As Boolean
                 TestCountSubstring = False
                 Debug.Print "Single char Compare method text"
             End If
-        
+
     'Multiple char
 
         'Not there
@@ -408,13 +416,13 @@ Private Function TestCountSubstring() As Boolean
                 TestCountSubstring = False
                 Debug.Print "Multiple char Multiple there Middle"
             End If
-            
+
             'End
             If CountSubstring("AAAABBBBCCCC", "CC") <> 3 Then
                 TestCountSubstring = False
                 Debug.Print "Multiple char Multiple there End"
             End If
-            
+
         'Compare method
         If CountSubstring("AAAABBBBCCCC", "cc") <> 0 Then
             TestCountSubstring = False
@@ -424,15 +432,15 @@ Private Function TestCountSubstring() As Boolean
             TestCountSubstring = False
             Debug.Print "Multiple char Compare method text"
         End If
-            
+
     Debug.Print "TestCountSubstring: " & TestCountSubstring
 
 End Function
 
 Private Function TestSI() As Boolean
-    
+
     TestSI = True
-    
+
     'Empty
     On Error Resume Next
     SI ""
@@ -441,13 +449,13 @@ Private Function TestSI() As Boolean
         Debug.Print "Empty"
     End If
     On Error GoTo 0
-    
+
     'None
     If SI("Hello") <> "Hello" Then
         TestSI = False
         Debug.Print "None"
     End If
-        
+
     'Single
         'Beginning
         If SI("{} World", "Hello") <> "Hello World" Then
@@ -481,7 +489,7 @@ Private Function TestSI() As Boolean
             TestSI = False
             Debug.Print "Multiple End"
         End If
-        
+
     'Wrong number of args
         'Less
         On Error Resume Next
@@ -515,7 +523,7 @@ Private Function TestSI() As Boolean
             Debug.Print "Wrong number of args None2"
         End If
         On Error GoTo 0
-        
+
     Debug.Print "TestSI: " & TestSI
 
 End Function
@@ -657,21 +665,21 @@ Public Function TestEndsWith() As Boolean
 End Function
 
 Public Function TestReplaceNBSP() As Boolean
-    
+
     TestReplaceNBSP = True
-    
+
     'Empty
     If ReplaceNBSP("") <> "" Then
         TestReplaceNBSP = False
         Debug.Print "Empty"
     End If
-    
+
     'Not There
     If ReplaceNBSP("A") <> "A" Then
         TestReplaceNBSP = False
         Debug.Print "Not There"
     End If
-        
+
     'Single
         'Beginning
         If ReplaceNBSP(Chr(160) & "A") <> " A" Then
@@ -693,7 +701,7 @@ Public Function TestReplaceNBSP() As Boolean
             TestReplaceNBSP = False
             Debug.Print "Single Beginning Middle End"
         End If
-        
+
     'Multiple
         'Beginning
         If ReplaceNBSP(Chr(160) & Chr(160) & "A") <> "  A" Then
@@ -716,39 +724,39 @@ Public Function TestReplaceNBSP() As Boolean
             TestReplaceNBSP = False
             Debug.Print "Multiple Beginning Middle End"
         End If
-        
+
     Debug.Print "TestReplaceNBSP: " & TestReplaceNBSP
-    
+
 End Function
 
 Private Function TestTrimAll() As Boolean
-    
+
     TestTrimAll = True
-    
+
     'Empty
     If TrimAll("") <> "" Then
         TestTrimAll = False
         Debug.Print "Empty"
     End If
-    
+
     'One only
     If TrimAll(" ") <> "" Then
         TestTrimAll = False
         Debug.Print "One only"
     End If
-    
+
     'Multiple only
     If TrimAll("  ") <> "" Then
         TestTrimAll = False
         Debug.Print "Multiple only"
     End If
-    
+
     'No spaces
     If TrimAll("HelloWorld") <> "HelloWorld" Then
         TestTrimAll = False
         Debug.Print "No spaces"
     End If
-    
+
     'Single
         'Leading
         If TrimAll(" HelloWorld") <> "HelloWorld" Then
@@ -770,7 +778,7 @@ Private Function TestTrimAll() As Boolean
             TestTrimAll = False
             Debug.Print "Single Leading Middle Trailing"
         End If
-    
+
     'Multiple
         'Leading
         If TrimAll("  HelloWorld") <> "HelloWorld" Then
@@ -792,76 +800,76 @@ Private Function TestTrimAll() As Boolean
             TestTrimAll = False
             Debug.Print "Multiple Leading Middle Trailing"
         End If
-    
+
     Debug.Print "TestTrimAll: " & TestTrimAll
-    
+
 End Function
 
 Public Function TestRemoveNonPrintableCharacters() As Boolean
-    
+
     TestRemoveNonPrintableCharacters = True
-    
+
     'Empty
     If RemoveNonPrintableCharacters("") <> "" Then
         TestRemoveNonPrintableCharacters = False
         Debug.Print "Empty"
     End If
-    
+
     'None
     If RemoveNonPrintableCharacters("A") <> "A" Then
         TestRemoveNonPrintableCharacters = False
         Debug.Print "None"
     End If
-    
+
     'Only
     If RemoveNonPrintableCharacters(Chr(0)) <> "" Then
         TestRemoveNonPrintableCharacters = False
         Debug.Print "Only"
     End If
-    
+
     'Multiple none
     If RemoveNonPrintableCharacters("AAA") <> "AAA" Then
         TestRemoveNonPrintableCharacters = False
         Debug.Print "Multiple none"
     End If
-    
+
     'Multiple only
     If RemoveNonPrintableCharacters(Chr(0) & Chr(0) & Chr(0)) <> "" Then
         TestRemoveNonPrintableCharacters = False
         Debug.Print "Multiple only"
     End If
-    
+
     'Beginning
     If RemoveNonPrintableCharacters(Chr(0) & "AA") <> "AA" Then
         TestRemoveNonPrintableCharacters = False
         Debug.Print "Beginning"
     End If
-    
+
     'Middle
     If RemoveNonPrintableCharacters("A" & Chr(0) & "A") <> "AA" Then
         TestRemoveNonPrintableCharacters = False
         Debug.Print "Middle"
     End If
-    
+
     'End
     If RemoveNonPrintableCharacters("AA" & Chr(0)) <> "AA" Then
         TestRemoveNonPrintableCharacters = False
         Debug.Print "End"
     End If
-    
+
     'Beginning Middle End
     If RemoveNonPrintableCharacters(Chr(0) & "A" & Chr(0) & "A" & Chr(0)) <> "AA" Then
         TestRemoveNonPrintableCharacters = False
         Debug.Print "Beginning Middle End"
     End If
-    
+
     'Does not remove new lines
     If RemoveNonPrintableCharacters(vbCrLf & " " & vbCr & " " & vbLf) <> _
     vbCrLf & " " & vbCr & " " & vbLf Then
         TestRemoveNonPrintableCharacters = False
         Debug.Print "Does not remove new lines"
     End If
-    
+
     '0 - 31
     Dim i&
     For i = 0 To 31
@@ -872,7 +880,7 @@ Public Function TestRemoveNonPrintableCharacters() As Boolean
             End If
         End If
     Next i
-    
+
     '32 - 65535
     For i = 32 To 65535
         If RemoveNonPrintableCharacters(ChrW(i)) <> ChrW(i) Then
@@ -880,21 +888,21 @@ Public Function TestRemoveNonPrintableCharacters() As Boolean
             Debug.Print "32 - 65535"
         End If
     Next i
-    
+
     Debug.Print "TestRemoveNonPrintableCharacters: " & TestRemoveNonPrintableCharacters
-    
+
 End Function
 
 Public Function TestReplaceNewLineCharacters() As Boolean
 
     TestReplaceNewLineCharacters = True
-    
+
     'Empty
     If ReplaceNewLineCharacters("") <> "" Then
         TestReplaceNewLineCharacters = False
         Debug.Print "Empty"
     End If
-    
+
     'CRLF
         'Single
             'Only
@@ -1024,33 +1032,33 @@ Public Function TestReplaceNewLineCharacters() As Boolean
                 TestReplaceNewLineCharacters = False
                 Debug.Print "LF Multiple Middle"
             End If
-        
+
     'CRLF CR LF
     If ReplaceNewLineCharacters("A" & vbCrLf & "A" & vbCr & "A" & vbLf) <> "A A A " Then
         TestReplaceNewLineCharacters = False
         Debug.Print "CRLF CR LF"
     End If
-    
+
     'Replacement single char
     If ReplaceNewLineCharacters("A" & vbCrLf & "A" & vbCr & "A" & vbLf, "B") <> "ABABAB" Then
         TestReplaceNewLineCharacters = False
         Debug.Print "Replacement single char"
     End If
-    
+
     'Replacement multiple chars
     If ReplaceNewLineCharacters("A" & vbCrLf & "A" & vbCr & "A" & vbLf, "CC") <> "ACCACCACC" Then
         TestReplaceNewLineCharacters = False
         Debug.Print "Replacement multiple chars"
     End If
-    
+
     'Replacement empty
     If ReplaceNewLineCharacters("A" & vbCrLf & "A" & vbCr & "A" & vbLf, "") <> "AAA" Then
         TestReplaceNewLineCharacters = False
         Debug.Print "Replacement empty"
     End If
-    
+
     Debug.Print "TestReplaceNewLineCharacters: " & TestReplaceNewLineCharacters
-    
+
 End Function
 
 Public Function TestCleanText() As Boolean
@@ -1092,7 +1100,7 @@ Public Function TestCleanText() As Boolean
         TestCleanText = False
         Debug.Print "Disable Trim Spaces"
     End If
-    
+
     'NL Replacement
     If CleanText(" Hello  " & vbCrLf & "World" & Chr(160) & Chr(0), , , , , "|") <> "Hello |World" Then
         TestCleanText = False

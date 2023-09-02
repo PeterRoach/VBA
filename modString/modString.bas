@@ -31,7 +31,7 @@ Option Explicit
 '  Module Type: Standard
 '  Module Name: modString
 '  Module Description: Contains functions for working with strings.
-'  Module Version: 1.0
+'  Module Version: 1.1
 '  Module License: MIT
 '  Module Author: Peter Roach; PeterRoach.Code@gmail.com
 '  Module Contents:
@@ -153,6 +153,26 @@ Public Function SI$(Text$, ParamArray Args())
     SI = Join(Arr2, "")
 End Function
 
+Public Function StartsWith(WholeText$, SearchText$, _
+Optional CompareMethod As VbCompareMethod = vbBinaryCompare) As Boolean
+    If Len(SearchText) = 0 Then
+        StartsWith = True
+    Else
+        StartsWith = InStr(1, WholeText, SearchText, CompareMethod) = 1
+    End If
+End Function
+
+Public Function EndsWith(WholeText$, SearchText$, Optional _
+CompareMethod As VbCompareMethod = vbBinaryCompare) As Boolean
+    If Len(SearchText) = 0 Then
+        EndsWith = True
+    ElseIf Len(SearchText) > Len(WholeText) Then
+        EndsWith = False
+    Else
+        EndsWith = InStrRev(WholeText, SearchText, -1, CompareMethod) = _
+        Len(WholeText) - Len(SearchText) + 1
+    End If
+End Function
 
 'Text Cleaning Functions===============================================
 '======================================================================
@@ -217,6 +237,8 @@ Private Function TestmodString() As Boolean
         TestAscW2 And _
         TestCountSubstring And _
         TestSI And _
+        TestStartsWith And _
+        TestEndsWith And _
         TestReplaceNBSP And _
         TestTrimAll And _
         TestRemoveNonPrintableCharacters And _
@@ -495,6 +517,142 @@ Private Function TestSI() As Boolean
         On Error GoTo 0
         
     Debug.Print "TestSI: " & TestSI
+
+End Function
+
+Public Function TestStartsWith() As Boolean
+
+    TestStartsWith = True
+
+    If StartsWith("", "Test") <> False Then
+        TestStartsWith = False
+        Debug.Print "Blank Whole"
+    End If
+
+    If StartsWith("Test", "") <> True Then
+        TestStartsWith = False
+        Debug.Print "Blank Search"
+    End If
+
+    If StartsWith("", "") <> True Then
+        TestStartsWith = False
+        Debug.Print "Blank Both"
+    End If
+
+    If StartsWith("A", "A") <> True Then
+        TestStartsWith = False
+        Debug.Print "Single letter True"
+    End If
+
+    If StartsWith("A", "B") <> False Then
+        TestStartsWith = False
+        Debug.Print "Single letter False"
+    End If
+
+    If StartsWith("ABC", "A") <> True Then
+        TestStartsWith = False
+        Debug.Print "Multiple letter A"
+    End If
+
+    If StartsWith("ABC", "AB") <> True Then
+        TestStartsWith = False
+        Debug.Print "Multiple letter AB"
+    End If
+
+    If StartsWith("ABC", "ABC") <> True Then
+        TestStartsWith = False
+        Debug.Print "Multiple letter ABC"
+    End If
+
+    If StartsWith("ABC", "ABCD") <> False Then
+        TestStartsWith = False
+        Debug.Print "Search longer than Whole"
+    End If
+
+    If StartsWith("ABC", "abc") <> False Then
+        TestStartsWith = False
+        Debug.Print "Case Sensitivity False"
+    End If
+
+    If StartsWith("ABC", "abc", vbTextCompare) <> True Then
+        TestStartsWith = False
+        Debug.Print "Case Sensitivity True"
+    End If
+
+    If StartsWith("ABCDAB", "AB") <> True Then
+        TestStartsWith = False
+        Debug.Print "Repeated"
+    End If
+
+    Debug.Print "TestStartsWith: " & TestStartsWith
+
+End Function
+
+Public Function TestEndsWith() As Boolean
+
+    TestEndsWith = True
+
+    If EndsWith("", "Test") <> False Then
+        TestEndsWith = False
+        Debug.Print "Blank Whole"
+    End If
+
+    If EndsWith("Test", "") <> True Then
+        TestEndsWith = False
+        Debug.Print "Blank Search"
+    End If
+
+    If EndsWith("", "") <> True Then
+        TestEndsWith = False
+        Debug.Print "Blank Both"
+    End If
+
+    If EndsWith("A", "A") <> True Then
+        TestEndsWith = False
+        Debug.Print "Single letter True"
+    End If
+
+    If EndsWith("A", "B") <> False Then
+        TestEndsWith = False
+        Debug.Print "Single letter False"
+    End If
+
+    If EndsWith("ABC", "C") <> True Then
+        TestEndsWith = False
+        Debug.Print "Multiple letter A"
+    End If
+
+    If EndsWith("ABC", "BC") <> True Then
+        TestEndsWith = False
+        Debug.Print "Multiple letter AB"
+    End If
+
+    If EndsWith("ABC", "ABC") <> True Then
+        TestEndsWith = False
+        Debug.Print "Multiple letter ABC"
+    End If
+
+    If EndsWith("ABC", "ABCD") <> False Then
+        TestEndsWith = False
+        Debug.Print "Search longer than Whole"
+    End If
+
+    If EndsWith("ABC", "abc") <> False Then
+        TestEndsWith = False
+        Debug.Print "Case Sensitivity False"
+    End If
+
+    If EndsWith("ABC", "abc", vbTextCompare) <> True Then
+        TestEndsWith = False
+        Debug.Print "Case Sensitivity True"
+    End If
+
+    If EndsWith("ABCDAB", "AB") <> True Then
+        TestEndsWith = False
+        Debug.Print "Repeated"
+    End If
+
+    Debug.Print "TestEndsWith: " & TestEndsWith
 
 End Function
 

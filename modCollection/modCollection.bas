@@ -240,7 +240,7 @@ End Function
 Private Function TestValidateCollectionType() As Boolean
 
     TestValidateCollectionType = True
-    
+
     Dim Coll As Collection
 
     'True
@@ -292,7 +292,7 @@ Private Function TestValidateCollectionType() As Boolean
         TestValidateCollectionType = False
         Debug.Print "Collection"
     End If
-    
+
     'False
 
     Set Coll = New Collection
@@ -330,7 +330,7 @@ Private Function TestValidateCollectionType() As Boolean
         TestValidateCollectionType = False
         Debug.Print "Boolean False 1"
     End If
-    
+
     Set Coll = New Collection
     Coll.Add True
     Coll.Add False
